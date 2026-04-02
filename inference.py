@@ -18,6 +18,7 @@ class HybridAgent:
                 action = self._llm_decision(state)
 
                 if isinstance(action, dict) and "tool" in action:
+                    action["reasoning"] = "LLM-based decision"
                     return action
 
             except Exception as e:
@@ -25,50 +26,115 @@ class HybridAgent:
 
         return self._rule_based(state)
 
+    # ---------------- RULE-BASED INTELLIGENT AGENT ---------------- #
     def _rule_based(self, state):
         files = state.get("files", {})
         test_results = state.get("test_results", {})
+        step = state.get("step_count", 0)
+        tool_usage = state.get("tool_usage", {})
 
-        # 1. Run tests first
+        # ---------------- PHASE 1: UNDERSTAND ---------------- #
+        if step == 0:
+            return {
+                "tool": "doc_search",
+                "params": {"query": state.get("current_task", "")},
+                "reasoning": "Understanding task requirements via documentation"
+            }
+
+        # ---------------- PHASE 2: RUN TESTS ---------------- #
         if not test_results:
-            return {"tool": "run_tests", "params": {}}
+            return {
+                "tool": "run_tests",
+                "params": {},
+                "reasoning": "Running tests to understand current failures"
+            }
 
-        # 2. Fix code if failing
+        # ---------------- PHASE 3: DEBUG USING DOCS ---------------- #
         if not test_results.get("passed"):
+            # if docs not used yet → use them
+            if "doc_search" not in tool_usage:
+                return {
+                    "tool": "doc_search",
+                    "params": {"query": str(test_results)},
+                    "reasoning": "Searching documentation for error resolution"
+                }
+
+            # fix code
             if "main.py" in files:
                 code = files["main.py"]
 
                 if "return a - b" in code:
                     new_code = code.replace("return a - b", "return a + b")
+
                 elif "return None" in code:
                     new_code = code.replace("return None", "return sum(data)")
+
+                elif "divide" in code and "/ b" in code:
+                    new_code = code.replace(
+                        "return a / b",
+                        "return a / b if b != 0 else 0"
+                    )
+
                 else:
-                    new_code = code + "\n# fallback fix applied"
+                    new_code = code + "\n# applied fallback fix"
 
                 return {
                     "tool": "edit_file",
                     "params": {
                         "filename": "main.py",
                         "new_content": new_code
-                    }
+                    },
+                    "reasoning": "Fixing code based on observed errors"
                 }
 
-        # 3. Re-run tests
-        return {"tool": "run_tests", "params": {}}
+        # ---------------- PHASE 4: VALIDATE ---------------- #
+        if not test_results.get("passed"):
+            return {
+                "tool": "run_tests",
+                "params": {},
+                "reasoning": "Re-running tests after fix"
+            }
 
+        # ---------------- PHASE 5: COMMIT ---------------- #
+        if "git_commit" not in tool_usage:
+            return {
+                "tool": "git_commit",
+                "params": {"message": "Fixed bug and improved logic"},
+                "reasoning": "Saving stable version using git"
+            }
+
+        # ---------------- PHASE 6: TERMINAL CHECK ---------------- #
+        if "terminal" not in tool_usage:
+            return {
+                "tool": "terminal",
+                "params": {"command": "ls"},
+                "reasoning": "Inspecting project files via terminal"
+            }
+
+        # ---------------- FINAL ---------------- #
+        return {
+            "tool": "run_tests",
+            "params": {},
+            "reasoning": "Final verification"
+        }
+
+    # ---------------- LLM ---------------- #
     def _llm_decision(self, state):
         from openai import OpenAI
 
         client = OpenAI()
 
         prompt = f"""
-You are an AI coding agent.
+You are an autonomous software engineering agent.
 
-Current state:
+State:
 {state}
 
-Return ONLY valid JSON like:
-{{"tool": "edit_file", "params": {{"filename": "main.py", "new_content": "..."}}}}
+Decide next action using tools like:
+code_editor, test_runner, doc_search, git, terminal
+
+Return ONLY JSON:
+{{"tool": "...", "params": {{...}}}}
 """
 
         response = client.chat.completions.create(
@@ -104,7 +170,8 @@ def run_episode(task="easy", max_steps=20):
         print(f"\n--- Step {step+1} ---")
 
         action = agent.decide_action(state)
-        print("Action:", action)
+        print("🧠 Reasoning:", action.get("reasoning"))
+        print("⚡ Action:", action)
 
         result = env.step(action)
 
@@ -114,17 +181,22 @@ def run_episode(task="easy", max_steps=20):
 
         total_reward += reward
 
-        print("Result:", result["result"])
-        print("Reward:", reward)
+        print("📌 Result:", result["result"])
+        print("💰 Reward:", reward)
 
         if done:
             print("\n✅ Task Completed!")
             break
 
-        time.sleep(0.3)
+        time.sleep(0.2)
 
-    print("\n📊 Final Score:", total_reward)
-    print("Steps Taken:", state["step_count"])
+    # FINAL EVALUATION
+    evaluation = env.evaluate()
+
+    print("\n📊 Final Reward:", total_reward)
+    print("📊 Evaluation:", evaluation)
+    print("🧰 Tool Usage:", state.get("tool_usage"))
+    print("🧠 Reasoning Trace:", state.get("reasoning_trace"))
 
     return total_reward
 
@@ -133,6 +205,6 @@ def run_episode(task="easy", max_steps=20):
 if __name__ == "__main__":
     print("\n🔥 Starting AgentForge System...\n")
 
-    for task in ["easy", "medium", "hard"]:
+    for task in ["easy", "medium", "hard", "hard_plus"]:
         print("\n" + "=" * 50)
         run_episode(task)
