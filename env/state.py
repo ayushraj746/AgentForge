@@ -23,9 +23,9 @@ class EnvironmentState(BaseModel):
     task_metadata: Dict[str, Any] = Field(default_factory=dict)
 
     # -----------------------------
-    # WORKFLOW / LIFECYCLE (🔥 NEW)
+    # WORKFLOW / LIFECYCLE
     # -----------------------------
-    current_phase: str = "init"   # init → develop → test → debug → deploy
+    current_phase: str = "init"
     completed_phases: List[str] = Field(default_factory=list)
 
     # -----------------------------
@@ -36,7 +36,7 @@ class EnvironmentState(BaseModel):
     done: bool = False
 
     # -----------------------------
-    # SYSTEM ISSUES (🔥 UPGRADED)
+    # SYSTEM ISSUES
     # -----------------------------
     errors: List[str] = Field(default_factory=list)
     active_issues: List[str] = Field(default_factory=list)
@@ -65,9 +65,14 @@ class EnvironmentState(BaseModel):
     cumulative_reward: float = 0.0
 
     # -----------------------------
-    # EVENT SYSTEM (🔥 VERY IMPORTANT)
+    # EVENT SYSTEM
     # -----------------------------
     triggered_events: List[str] = Field(default_factory=list)
+
+    # -----------------------------
+    # 🔥 DYNAMIC ENVIRONMENT FLAGS (NEW)
+    # -----------------------------
+    dynamic_issue_active: bool = False
 
     # -----------------------------
     # TIMING
@@ -78,7 +83,6 @@ class EnvironmentState(BaseModel):
     # -----------------------------
     # UTILITY METHODS
     # -----------------------------
-
     def to_dict(self) -> Dict[str, Any]:
         return self.model_dump()
 
@@ -149,7 +153,7 @@ class EnvironmentState(BaseModel):
         self.retry_count += 1
 
     # -----------------------------
-    # WORKFLOW CONTROL (🔥 IMPORTANT)
+    # WORKFLOW CONTROL
     # -----------------------------
     def set_phase(self, phase: str):
         if phase != self.current_phase:

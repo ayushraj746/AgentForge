@@ -67,7 +67,6 @@ class AgentForgeEnv:
         # Track reasoning
         self.state.add_reasoning(reasoning)
 
-        # Initialize editor
         editor = CodeEditor(self.state.files)
 
         try:
@@ -104,14 +103,13 @@ class AgentForgeEnv:
                 result = f"Unknown tool: {tool}"
                 self.state.add_error(result)
 
-            # Track tool usage
             self.state.track_tool(tool)
 
         except Exception as e:
             result = f"Error executing tool: {str(e)}"
             self.state.add_error(result)
 
-        # -------- APPLY EVENTS (🔥 IMPORTANT) -------- #
+        # -------- APPLY EVENTS -------- #
         self._apply_events()
 
         # -------- STEP UPDATE -------- #
@@ -134,8 +132,11 @@ class AgentForgeEnv:
             reasoning=reasoning
         )
 
+        # -------- DYNAMIC BUG SYSTEM (FIXED) -------- #
+        self._handle_dynamic_issue()
+
         # -------- DONE CONDITION -------- #
-        if self.state.test_results.get("passed"):
+        if self.state.test_results.get("passed") and not self.state.dynamic_issue_active:
             self.state.done = True
 
         if self.state.step_count >= self.state.max_steps:
@@ -169,6 +170,37 @@ class AgentForgeEnv:
         elif event_type == "dependency_break":
             self.state.add_error("Dependency conflict in utils.py")
             self.state.trigger_event(event_type)
+
+    # ---------------- DYNAMIC ISSUE (🔥 FINAL FIXED VERSION) ---------------- #
+    def _handle_dynamic_issue(self):
+        """
+        Inject once → wait for fix → then reset → allow completion
+        """
+
+        # Case 1: Inject bug AFTER first success
+        if self.state.test_results.get("passed") and not self.state.dynamic_issue_active:
+            if "main.py" in self.state.files:
+                code = self.state.files["main.py"]
+
+                if "return a + b" in code or "sum(" in code:
+                    broken_code = code.replace("+", "-")
+
+                    self.state.files["main.py"] = broken_code
+                    self.state.add_error("Dynamic bug injected: logic corrupted")
+
+                    self.state.dynamic_issue_active = True
+
+                    print("⚠️ Dynamic Issue Injected: Logic corrupted after success")
+                    return
+
+        # Case 2: If bug was active and now fixed → reset flag
+        if self.state.dynamic_issue_active:
+            if self.state.test_results.get("passed"):
+                self.state.dynamic_issue_active = False
+                self.state.errors.clear()
+                self.state.active_issues.clear()
+
+                print("✅ Dynamic Issue Resolved")
 
     # ---------------- FINAL EVALUATION ---------------- #
     def evaluate(self) -> Dict[str, Any]:
