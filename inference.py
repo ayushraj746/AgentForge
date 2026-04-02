@@ -26,6 +26,26 @@ class HybridAgent:
 
         return self._rule_based(state)
 
+    # ---------------- FAILURE ANALYSIS (🔥 KILLER FEATURE) ---------------- #
+    def _analyze_failure(self, test_results):
+        errors = test_results.get("errors", [])
+
+        if not errors:
+            return "No clear error found"
+
+        error = errors[0].lower()
+
+        if "addition" in error:
+            return "Function is using subtraction instead of addition"
+
+        if "processing logic incomplete" in error:
+            return "Processing logic missing, should aggregate data (e.g., sum)"
+
+        if "division" in error:
+            return "Division not handling edge cases like divide by zero"
+
+        return "General logic issue detected"
+
     # ---------------- RULE-BASED INTELLIGENT AGENT ---------------- #
     def _rule_based(self, state):
         files = state.get("files", {})
@@ -52,7 +72,11 @@ class HybridAgent:
         # ---------------- PHASE 3: DEBUG ---------------- #
         if not test_results.get("passed"):
 
-            # if already fixed → VERIFY (🔥 KEY FIX)
+            # 🔥 ADD DIAGNOSIS
+            diagnosis = self._analyze_failure(test_results)
+            print("🧠 Diagnosis:", diagnosis)
+
+            # if already fixed → VERIFY
             if "main.py" in files:
                 code = files["main.py"]
 
@@ -64,7 +88,7 @@ class HybridAgent:
                     return {
                         "tool": "run_tests",
                         "params": {},
-                        "reasoning": "Verifying fix by re-running tests"
+                        "reasoning": f"Verifying fix after applying solution ({diagnosis})"
                     }
 
             # use docs if not used
@@ -72,7 +96,7 @@ class HybridAgent:
                 return {
                     "tool": "doc_search",
                     "params": {"query": str(test_results)},
-                    "reasoning": "Searching documentation for error resolution"
+                    "reasoning": f"Searching documentation to resolve error: {diagnosis}"
                 }
 
             # FIX CODE
@@ -100,7 +124,7 @@ class HybridAgent:
                         "filename": "main.py",
                         "new_content": new_code
                     },
-                    "reasoning": "Fixing code based on observed errors"
+                    "reasoning": f"Fixing code based on diagnosis: {diagnosis}"
                 }
 
         # ---------------- PHASE 4: VALIDATE ---------------- #
