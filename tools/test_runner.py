@@ -7,8 +7,7 @@ class TestRunner:
 
     def run_tests(self, files: Dict[str, str]) -> Dict[str, Any]:
         """
-        Simulated test runner.
-        Checks for basic correctness patterns.
+        Smarter test runner that checks actual logic patterns.
         """
 
         result = {
@@ -17,31 +16,63 @@ class TestRunner:
             "errors": []
         }
 
-        # Simple rule-based checks
         if "main.py" not in files:
             result["errors"].append("main.py missing")
             return result
 
         code = files["main.py"]
 
-        # Check for basic function existence
+        # -----------------------------
+        # BASIC STRUCTURE CHECKS
+        # -----------------------------
         if "def" not in code:
             result["errors"].append("No function defined")
+            return result
         else:
-            result["score"] += 0.4
+            result["score"] += 0.2
 
-        # Check for return statement
         if "return" not in code:
             result["errors"].append("Missing return statement")
+            return result
         else:
-            result["score"] += 0.3
+            result["score"] += 0.2
 
-        # Check for logic keywords
-        if "if" in code or "for" in code:
-            result["score"] += 0.3
+        # -----------------------------
+        # LOGIC CHECKS (🔥 IMPORTANT)
+        # -----------------------------
 
-        # Final pass condition
-        if result["score"] >= 0.7:
+        # Case 1: ADD FUNCTION
+        if "add" in code:
+            if "return a + b" in code:
+                result["score"] += 0.6
+            else:
+                result["errors"].append("Incorrect addition logic (should be a + b)")
+
+        # Case 2: SUM LIST
+        elif "sum_list" in code:
+            if "sum(" in code or "for" in code:
+                result["score"] += 0.6
+            else:
+                result["errors"].append("List summation logic incorrect")
+
+        # Case 3: DIVIDE FUNCTION
+        elif "divide" in code:
+            if "if b != 0" in code:
+                result["score"] += 0.6
+            else:
+                result["errors"].append("Division by zero not handled")
+
+        # Case 4: GENERIC PROCESSING
+        elif "process_data" in code:
+            if "sum(" in code or "max(" in code:
+                result["score"] += 0.6
+            else:
+                result["errors"].append("Processing logic incomplete")
+
+        # -----------------------------
+        # FINAL DECISION
+        # -----------------------------
+        if result["score"] >= 0.8:
             result["passed"] = True
 
         return result

@@ -49,9 +49,25 @@ class HybridAgent:
                 "reasoning": "Running tests to understand current failures"
             }
 
-        # ---------------- PHASE 3: DEBUG USING DOCS ---------------- #
+        # ---------------- PHASE 3: DEBUG ---------------- #
         if not test_results.get("passed"):
-            # if docs not used yet → use them
+
+            # if already fixed → VERIFY (🔥 KEY FIX)
+            if "main.py" in files:
+                code = files["main.py"]
+
+                if (
+                    "return a + b" in code
+                    or "return sum(" in code
+                    or "if b != 0" in code
+                ):
+                    return {
+                        "tool": "run_tests",
+                        "params": {},
+                        "reasoning": "Verifying fix by re-running tests"
+                    }
+
+            # use docs if not used
             if "doc_search" not in tool_usage:
                 return {
                     "tool": "doc_search",
@@ -59,7 +75,7 @@ class HybridAgent:
                     "reasoning": "Searching documentation for error resolution"
                 }
 
-            # fix code
+            # FIX CODE
             if "main.py" in files:
                 code = files["main.py"]
 
@@ -130,9 +146,6 @@ You are an autonomous software engineering agent.
 State:
 {state}
 
-Decide next action using tools like:
-code_editor, test_runner, doc_search, git, terminal
-
 Return ONLY JSON:
 {{"tool": "...", "params": {{...}}}}
 """
@@ -190,7 +203,6 @@ def run_episode(task="easy", max_steps=20):
 
         time.sleep(0.2)
 
-    # FINAL EVALUATION
     evaluation = env.evaluate()
 
     print("\n📊 Final Reward:", total_reward)
