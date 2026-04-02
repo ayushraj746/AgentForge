@@ -1,6 +1,6 @@
 import streamlit as st
 import time
-import matplotlib.pyplot as plt
+import pandas as pd
 
 from env.environment import AgentForgeEnv
 from inference import HybridAgent
@@ -49,11 +49,14 @@ if run_button:
 
     total_reward = 0.0
 
-    # Chart tracking
+    # 🔥 Chart tracking
     reward_history = []
     step_history = []
 
     log_area = st.container()
+
+    # 🔥 Live chart placeholder
+    chart_placeholder = st.empty()
 
     # ---------------- LOOP ---------------- #
     for step in range(20):
@@ -72,12 +75,20 @@ if run_button:
         reward_history.append(total_reward)
         step_history.append(step + 1)
 
-        # metrics
+        # ---------------- METRICS ---------------- #
         reward_placeholder.metric("Total Reward", round(total_reward, 3))
         step_placeholder.metric("Steps", step + 1)
         status_placeholder.metric("Status", "Running")
 
-        # logs
+        # ---------------- LIVE CHART ---------------- #
+        df = pd.DataFrame({
+            "Step": step_history,
+            "Reward": reward_history
+        }).set_index("Step")
+
+        chart_placeholder.line_chart(df)
+
+        # ---------------- LOGS ---------------- #
         with log_area:
             with st.expander(f"Step {step+1}", expanded=False):
                 st.write("🧠 Reasoning:", action.get("reasoning"))
@@ -96,7 +107,7 @@ if run_button:
             st.success("Task Completed Successfully")
             break
 
-        time.sleep(0.2)
+        time.sleep(0.3)
 
     # ---------------- FINAL ---------------- #
     st.divider()
@@ -115,14 +126,3 @@ if run_button:
 
     st.subheader("Reasoning Trace")
     st.write(state.get("reasoning_trace"))
-
-    # ---------------- CHART ---------------- #
-    st.subheader("Reward vs Steps")
-
-    fig, ax = plt.subplots()
-    ax.plot(step_history, reward_history)
-    ax.set_xlabel("Steps")
-    ax.set_ylabel("Reward")
-    ax.set_title("Agent Performance Over Time")
-
-    st.pyplot(fig)
