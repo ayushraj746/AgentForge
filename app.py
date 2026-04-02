@@ -1,12 +1,22 @@
 import streamlit as st
 import time
+import matplotlib.pyplot as plt
 
 from env.environment import AgentForgeEnv
 from inference import HybridAgent
 
 st.set_page_config(page_title="AgentForge", layout="wide")
 
-st.title("AgentForge — Autonomous Software Engineering Agent")
+# ---------------- STYLE ---------------- #
+st.markdown("""
+<style>
+.block-container {padding-top: 1rem;}
+</style>
+""", unsafe_allow_html=True)
+
+# ---------------- HEADER ---------------- #
+st.title("AgentForge Dashboard")
+st.caption("Autonomous Software Engineering Agent")
 
 # ---------------- SIDEBAR ---------------- #
 st.sidebar.header("Controls")
@@ -28,51 +38,91 @@ if run_button:
     st.subheader(f"Task: {task}")
     st.write(state["current_task"])
 
+    # Layout
+    col1, col2, col3 = st.columns(3)
+
+    reward_placeholder = col1.empty()
+    step_placeholder = col2.empty()
+    status_placeholder = col3.empty()
+
+    progress = st.progress(0)
+
     total_reward = 0.0
 
-    step_container = st.container()
+    # Chart tracking
+    reward_history = []
+    step_history = []
 
+    log_area = st.container()
+
+    # ---------------- LOOP ---------------- #
     for step in range(20):
-        with step_container:
-            st.markdown(f"### Step {step+1}")
+        progress.progress((step + 1) / 20)
 
-            action = agent.decide_action(state)
+        action = agent.decide_action(state)
+        result = env.step(action)
 
-            st.write("🧠 Reasoning:", action.get("reasoning"))
-            st.write("⚡ Action:", action)
+        state = result["state"]
+        reward = result["reward"]
+        done = result["done"]
 
-            result = env.step(action)
+        total_reward += reward
 
-            state = result["state"]
-            reward = result["reward"]
-            done = result["done"]
+        # store for chart
+        reward_history.append(total_reward)
+        step_history.append(step + 1)
 
-            total_reward += reward
+        # metrics
+        reward_placeholder.metric("Total Reward", round(total_reward, 3))
+        step_placeholder.metric("Steps", step + 1)
+        status_placeholder.metric("Status", "Running")
 
-            st.write("📌 Result:", result["result"])
-            st.write("💰 Reward:", reward)
+        # logs
+        with log_area:
+            with st.expander(f"Step {step+1}", expanded=False):
+                st.write("🧠 Reasoning:", action.get("reasoning"))
+                st.write("⚡ Action:", action)
+                st.write("📌 Result:", result["result"])
+                st.write("💰 Reward:", reward)
 
-            # Highlight dynamic issue
-            if "Dynamic Issue Injected" in str(result["result"]) or "Dynamic Issue" in str(result):
-                st.warning("⚠️ Dynamic Issue Triggered")
+                if "Diagnosis" in str(action.get("reasoning")):
+                    st.info("🧠 Diagnosis triggered")
 
-            if done:
-                st.success("Task Completed")
-                break
+                if "Dynamic Issue" in str(result["result"]) or "Dynamic Issue" in str(result):
+                    st.warning("⚠️ Dynamic Issue Injected")
 
-            time.sleep(0.3)
+        if done:
+            status_placeholder.metric("Status", "Completed")
+            st.success("Task Completed Successfully")
+            break
+
+        time.sleep(0.2)
 
     # ---------------- FINAL ---------------- #
+    st.divider()
+
     evaluation = env.evaluate()
 
-    st.subheader("Final Evaluation")
-    st.write(evaluation)
+    colA, colB = st.columns(2)
 
-    st.subheader("Total Reward")
-    st.write(total_reward)
+    with colA:
+        st.subheader("Evaluation")
+        st.json(evaluation)
 
-    st.subheader("Tool Usage")
-    st.write(state.get("tool_usage"))
+    with colB:
+        st.subheader("Tool Usage")
+        st.json(state.get("tool_usage"))
 
     st.subheader("Reasoning Trace")
     st.write(state.get("reasoning_trace"))
+
+    # ---------------- CHART ---------------- #
+    st.subheader("Reward vs Steps")
+
+    fig, ax = plt.subplots()
+    ax.plot(step_history, reward_history)
+    ax.set_xlabel("Steps")
+    ax.set_ylabel("Reward")
+    ax.set_title("Agent Performance Over Time")
+
+    st.pyplot(fig)
