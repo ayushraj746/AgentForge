@@ -1,0 +1,39 @@
+id: agentforge
+name: AgentForge Environment
+
+entry_point: env.environment:AgentForgeEnv
+
+description: >
+  AgentForge is a real-world OpenEnv environment simulating a software engineering workflow.
+  An AI agent performs coding, debugging, and testing using multiple tools.
+
+observation_space:
+  type: dict
+  properties:
+    files:
+      type: object
+      description: Project files with content
+    current_task:
+      type: string
+      description: Description of current task
+    step_count:
+      type: integer
+    errors:
+      type: array
+      items:
+        type: string
+    test_results:
+      type: object
+
+action_space:
+  type: dict
+  properties:
+    tool:
+      type: string
+      enum: ["create_file", "edit_file", "append_file", "delete_file", "run_tests"]
+    params:
+      type: object
+
+reward_range: [0, 2]
+
+max_steps: 50
