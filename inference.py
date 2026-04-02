@@ -1,7 +1,13 @@
 import os
 import json
+import time
+
+from env.environment import AgentForgeEnv
+
+print("🚀 File running")
 
 
+# ---------------- AGENT ---------------- #
 class HybridAgent:
     def __init__(self):
         self.use_openai = bool(os.getenv("OPENAI_API_KEY"))
@@ -11,7 +17,6 @@ class HybridAgent:
             try:
                 action = self._llm_decision(state)
 
-                # safety check
                 if isinstance(action, dict) and "tool" in action:
                     return action
 
@@ -73,14 +78,61 @@ Return ONLY valid JSON like:
 
         content = response.choices[0].message.content.strip()
 
-        # -------- SAFE PARSING -------- #
         try:
-            # remove markdown if present
             if content.startswith("```"):
                 content = content.split("```")[1]
 
-            action = json.loads(content)
-            return action
+            return json.loads(content)
 
         except Exception:
             return self._rule_based(state)
+
+
+# ---------------- RUN EPISODE ---------------- #
+def run_episode(task="easy", max_steps=20):
+    env = AgentForgeEnv()
+    agent = HybridAgent()
+
+    state = env.reset(task=task)
+
+    print(f"\n🚀 Starting Task: {task}")
+    print(f"📝 Description: {state['current_task']}")
+
+    total_reward = 0.0
+
+    for step in range(max_steps):
+        print(f"\n--- Step {step+1} ---")
+
+        action = agent.decide_action(state)
+        print("Action:", action)
+
+        result = env.step(action)
+
+        state = result["state"]
+        reward = result["reward"]
+        done = result["done"]
+
+        total_reward += reward
+
+        print("Result:", result["result"])
+        print("Reward:", reward)
+
+        if done:
+            print("\n✅ Task Completed!")
+            break
+
+        time.sleep(0.3)
+
+    print("\n📊 Final Score:", total_reward)
+    print("Steps Taken:", state["step_count"])
+
+    return total_reward
+
+
+# ---------------- MAIN ---------------- #
+if __name__ == "__main__":
+    print("\n🔥 Starting AgentForge System...\n")
+
+    for task in ["easy", "medium", "hard"]:
+        print("\n" + "=" * 50)
+        run_episode(task)
