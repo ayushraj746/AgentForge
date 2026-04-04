@@ -8,6 +8,13 @@ Traditional AI environments are static and limited to single-step problem solvin
 
 The environment is deterministic, reproducible, and designed for evaluating multi-step reasoning and tool usage.
 
+## Problem Statement
+
+Modern software development involves complex workflows including debugging, testing, and adapting to changing requirements. Most AI environments fail to capture this complexity and remain limited to static problem-solving.
+
+AgentForge addresses this gap by providing a dynamic, tool-integrated environment where agents must continuously adapt and make decisions like real developers.
+
+
 ## Key Features
 
 * OpenEnv-compliant environment with `step()`, `reset()`, and `state()` APIs
@@ -18,6 +25,15 @@ The environment is deterministic, reproducible, and designed for evaluating mult
 * Reward shaping based on correctness, efficiency, and workflow quality
 * Step-by-step reasoning trace and history logging
 * Live dashboard with real-time performance tracking
+
+## Real-World Use Cases
+
+* Automating repetitive development workflows in startups and enterprises
+* Training AI agents for real-world coding and debugging scenarios
+* Benchmarking AI systems on multi-step reasoning tasks
+* Simulating software engineering environments for research and testing
+
+
 
 ## System Architecture
 
@@ -134,6 +150,24 @@ agentforge/
 * Advanced planning strategies
 * Multi-agent collaboration
 * Deployment on HuggingFace Spaces
+
+## Business Impact
+
+AgentForge can significantly reduce development time by enabling AI-driven automation of debugging and testing workflows. 
+
+It has potential applications in:
+* Developer productivity tools
+* AI-assisted coding platforms
+* Enterprise workflow automation systems
+
+This makes it valuable for both startups and large-scale tech companies.
+
+## Target Users
+
+* AI researchers and engineers
+* Developers building autonomous coding agents
+* Organizations exploring AI-driven development workflows
+
 
 ## Conclusion
 
