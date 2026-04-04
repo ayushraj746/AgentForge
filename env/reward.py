@@ -16,7 +16,7 @@ class RewardCalculator:
         reward = 0.0
 
         # -----------------------------
-        # 1. CORRECTNESS (🔥 MOST IMPORTANT)
+        # 1. CORRECTNESS (MOST IMPORTANT)
         # -----------------------------
         correctness_score = 0.0
         if "test_results" in observation:
@@ -60,6 +60,9 @@ class RewardCalculator:
             - self.weights["penalty"] * penalty_score
         )
 
+        # Normalize reward to prevent extreme values
+        reward = reward / (1 + abs(reward))
+
         return round(reward, 4)
 
     # -----------------------------
@@ -71,7 +74,7 @@ class RewardCalculator:
 
         total_tools = len(state.tool_usage)
 
-        # Encourage using multiple tools (not just code edit spam)
+        # Encourage diverse tool usage
         return min(1.0, total_tools / 4)
 
     # -----------------------------
@@ -81,11 +84,10 @@ class RewardCalculator:
         if not state.active_issues:
             return 1.0
 
-        # fewer issues = better
         return max(0.0, 1 - (len(state.active_issues) / 5))
 
     # -----------------------------
-    # PENALTY SYSTEM (🔥 IMPORTANT)
+    # PENALTY SYSTEM
     # -----------------------------
     def _penalty_score(self, state, action: str, observation: Dict[str, Any]) -> float:
         penalty = 0.0
@@ -103,7 +105,7 @@ class RewardCalculator:
             if state.history[-1]["action"] == action:
                 penalty += 0.1
 
-        # No tool usage (bad workflow)
+        # No tool usage
         if not state.tool_usage:
             penalty += 0.2
 
