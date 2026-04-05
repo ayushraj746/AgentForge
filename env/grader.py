@@ -13,7 +13,9 @@ class Grader:
     def grade(self, state) -> Dict[str, Any]:
         scores = {}
 
-        # correctness
+        # -----------------------------
+        # CORRECTNESS
+        # -----------------------------
         if not state.test_results:
             correctness = 0.0
         elif state.test_results.get("passed"):
@@ -23,7 +25,9 @@ class Grader:
 
         scores["correctness"] = correctness
 
-        # completion
+        # -----------------------------
+        # COMPLETION
+        # -----------------------------
         if state.done:
             completion = 1.0
         else:
@@ -31,13 +35,18 @@ class Grader:
 
         scores["completion"] = completion
 
-        # workflow
+        # -----------------------------
+        # WORKFLOW
+        # -----------------------------
         tools_used = len(state.tool_usage)
         workflow = min(1.0, tools_used / 3)
         scores["workflow"] = workflow
 
-        # stability
+        # -----------------------------
+        # STABILITY
+        # -----------------------------
         errors = len(state.errors)
+
         if errors == 0:
             stability = 1.0
         else:
@@ -45,10 +54,16 @@ class Grader:
 
         scores["stability"] = stability
 
-        # final score
+        # -----------------------------
+        # FINAL SCORE CALCULATION
+        # -----------------------------
         final_score = sum(
             scores[k] * self.weights[k] for k in self.weights
         )
+
+        # Debug logging
+        print(f"[Grader Debug] Scores: {scores}")
+        print(f"[Grader Debug] Final Score: {round(final_score, 4)}")
 
         return {
             "final_score": round(final_score, 4),
