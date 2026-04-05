@@ -1,3 +1,13 @@
+---
+title: AgentForge
+emoji: 🚀
+colorFrom: blue
+colorTo: purple
+sdk: docker
+app_file: app.py
+pinned: false
+---
+
 # AgentForge
 
 AgentForge is an OpenEnv-compliant environment that simulates a real-world software engineering workflow. It allows an AI agent to act as an autonomous developer capable of planning, coding, debugging, testing, and adapting to evolving system conditions.
