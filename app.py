@@ -1,11 +1,11 @@
 import streamlit as st
 import time
 import pandas as pd
-
 from env.environment import AgentForgeEnv
 from inference import HybridAgent
 
-st.set_page_config(page_title="AgentForge", layout="wide")
+# ---------------- PAGE CONFIG ---------------- #
+st.set_page_config(page_title="AgentForge Dashboard", layout="wide")
 
 # ---------------- STYLE ---------------- #
 st.markdown("""
@@ -15,30 +15,32 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ---------------- HEADER ---------------- #
-st.title("AgentForge Dashboard")
-st.caption("Autonomous Software Engineering Agent")
+st.title("🚀 AgentForge Dashboard")
+st.caption("Autonomous AI Agent for Software Engineering Workflows")
 
 # ---------------- SIDEBAR ---------------- #
-st.sidebar.header("Controls")
+st.sidebar.header("⚙️ Controls")
 
 task = st.sidebar.selectbox(
-    "Select Task",
+    "Select Task Difficulty",
     ["easy", "medium", "hard", "hard_plus"]
 )
 
-run_button = st.sidebar.button("Run Agent")
+run_button = st.sidebar.button("▶ Run Agent")
 
 # ---------------- MAIN ---------------- #
 if run_button:
+    # Initialize environment and agent
     env = AgentForgeEnv()
     agent = HybridAgent()
 
     state = env.reset(task=task)
 
-    st.subheader(f"Task: {task}")
+    st.subheader(f"📌 Selected Task: {task}")
+    st.write("### Task Description")
     st.write(state["current_task"])
 
-    # Layout
+    # Layout columns
     col1, col2, col3 = st.columns(3)
 
     reward_placeholder = col1.empty()
@@ -46,16 +48,15 @@ if run_button:
     status_placeholder = col3.empty()
 
     progress = st.progress(0)
-
     total_reward = 0.0
 
-    # 🔥 Chart tracking
+    # Tracking reward progression
     reward_history = []
     step_history = []
 
     log_area = st.container()
 
-    # 🔥 Live chart placeholder
+    # Live chart placeholder
     chart_placeholder = st.empty()
 
     # ---------------- LOOP ---------------- #
@@ -71,14 +72,14 @@ if run_button:
 
         total_reward += reward
 
-        # store for chart
+        # Store values for chart
         reward_history.append(total_reward)
         step_history.append(step + 1)
 
         # ---------------- METRICS ---------------- #
-        reward_placeholder.metric("Total Reward", round(total_reward, 3))
-        step_placeholder.metric("Steps", step + 1)
-        status_placeholder.metric("Status", "Running")
+        reward_placeholder.metric("💰 Total Reward", round(total_reward, 3))
+        step_placeholder.metric("📍 Steps", step + 1)
+        status_placeholder.metric("📡 Status", "Running")
 
         # ---------------- LIVE CHART ---------------- #
         df = pd.DataFrame({
@@ -90,21 +91,21 @@ if run_button:
 
         # ---------------- LOGS ---------------- #
         with log_area:
-            with st.expander(f"Step {step+1}", expanded=False):
+            with st.expander(f"Step {step + 1} Details", expanded=False):
                 st.write("🧠 Reasoning:", action.get("reasoning"))
-                st.write("⚡ Action:", action)
-                st.write("📌 Result:", result["result"])
-                st.write("💰 Reward:", reward)
+                st.write("⚡ Action Taken:", action)
+                st.write("📤 Result:", result.get("result"))
+                st.write("🎯 Reward Gained:", reward)
 
                 if "Diagnosis" in str(action.get("reasoning")):
-                    st.info("🧠 Diagnosis triggered")
+                    st.info("🩺 Diagnosis triggered")
 
-                if "Dynamic Issue" in str(result["result"]) or "Dynamic Issue" in str(result):
+                if "Dynamic Issue" in str(result.get("result")) or "Dynamic Issue" in str(result):
                     st.warning("⚠️ Dynamic Issue Injected")
 
         if done:
-            status_placeholder.metric("Status", "Completed")
-            st.success("Task Completed Successfully")
+            status_placeholder.metric("📡 Status", "Completed")
+            st.success("✅ Task Completed Successfully")
             break
 
         time.sleep(0.3)
@@ -117,12 +118,12 @@ if run_button:
     colA, colB = st.columns(2)
 
     with colA:
-        st.subheader("Evaluation")
+        st.subheader("📊 Evaluation Results")
         st.json(evaluation)
 
     with colB:
-        st.subheader("Tool Usage")
+        st.subheader("🛠 Tool Usage Summary")
         st.json(state.get("tool_usage"))
 
-    st.subheader("Reasoning Trace")
-    st.write(state.get("reasoning_trace"))
+        st.subheader("🧠 Reasoning Trace")
+        st.write(state.get("reasoning_trace"))
