@@ -1,4 +1,5 @@
 from typing import Dict, Any
+import random
 
 from env.state import EnvironmentState
 from tools.code_editor import CodeEditor
@@ -27,7 +28,7 @@ class AgentForgeEnv:
         self.reward_calculator = RewardCalculator()
         self.grader = Grader()
 
-        # Event system
+        # Event system (dynamic environment simulation)
         self.events = [
             {"step": 3, "type": "requirement_change"},
             {"step": 5, "type": "performance_issue"},
@@ -35,8 +36,12 @@ class AgentForgeEnv:
         ]
 
     # ---------------- RESET ---------------- #
-    def reset(self, task: str = "easy") -> Dict[str, Any]:
-        print(f"[Env] Resetting environment with task: {task}")  # 🔥 logging added
+    def reset(self, task: str = None) -> Dict[str, Any]:
+        # Random task selection if not provided
+        if task is None:
+            task = random.choice(["easy", "medium", "hard"])
+
+        print(f"[Env] Resetting environment with task: {task}")
 
         self.state = EnvironmentState()
 
@@ -64,7 +69,7 @@ class AgentForgeEnv:
         params = action.get("params", {})
         reasoning = action.get("reasoning", "No reasoning provided")
 
-        print(f"[Env] Step {self.state.step_count} | Tool: {tool}")  # 🔥 logging
+        print(f"[Env] Step {self.state.step_count} | Tool: {tool}")
 
         result = None
 
@@ -123,7 +128,10 @@ class AgentForgeEnv:
         reward = self.reward_calculator.compute(
             self.state,
             action=str(action),
-            observation={"test_results": self.state.test_results, "result": result}
+            observation={
+                "test_results": self.state.test_results,
+                "result": result
+            }
         )
         self.state.update_reward(reward)
 
@@ -147,7 +155,7 @@ class AgentForgeEnv:
             self.state.done = True
 
         if self.state.done:
-            print("[Env] Episode finished")  # 🔥 logging
+            print("[Env] Episode finished")
             self.state.end()
 
         return {
@@ -164,7 +172,7 @@ class AgentForgeEnv:
                 self._trigger_event(event["type"])
 
     def _trigger_event(self, event_type: str):
-        print(f"[Env] Event Triggered: {event_type}")  # 🔥 logging
+        print(f"[Env] Event Triggered: {event_type}")
 
         if event_type == "requirement_change":
             self.state.current_task += " | NEW: handle edge cases"
@@ -184,23 +192,32 @@ class AgentForgeEnv:
             if "main.py" in self.state.files:
                 code = self.state.files["main.py"]
 
-                if "return a + b" in code or "sum(" in code:
+                bug_type = random.choice(["logic", "edge", "performance"])
+
+                if bug_type == "logic":
                     broken_code = code.replace("+", "-")
 
-                    self.state.files["main.py"] = broken_code
-                    self.state.add_error("Dynamic bug injected: logic corrupted")
+                elif bug_type == "edge":
+                    broken_code = code.replace(
+                        "return",
+                        "if a == 0: return 0\n    return"
+                    )
 
-                    self.state.dynamic_issue_active = True
+                elif bug_type == "performance":
+                    broken_code = "for _ in range(10000000): pass\n" + code
 
-                    print("⚠️ Dynamic Issue Injected")
-                    return
+                self.state.files["main.py"] = broken_code
+                self.state.add_error(f"Dynamic bug injected: {bug_type}")
+
+                self.state.dynamic_issue_active = True
+                print(f"⚠️ Dynamic Issue Injected: {bug_type}")
+                return
 
         if self.state.dynamic_issue_active:
             if self.state.test_results.get("passed"):
                 self.state.dynamic_issue_active = False
                 self.state.errors.clear()
                 self.state.active_issues.clear()
-
                 print("✅ Dynamic Issue Resolved")
 
     # ---------------- FINAL EVALUATION ---------------- #
@@ -210,3 +227,7 @@ class AgentForgeEnv:
     # ---------------- STATE ---------------- #
     def get_state(self) -> Dict[str, Any]:
         return self.state.to_dict()
+
+    # ---------------- REQUIRED FOR OPENENV ---------------- #
+    def state(self) -> Dict[str, Any]:
+        return self.get_state()
