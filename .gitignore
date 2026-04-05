@@ -1,53 +1,80 @@
+# =========================================
+# Project: AgentForge
+# =========================================
+
 # =========================
 # Python
 # =========================
 __pycache__/
 *.py[cod]
 *$py.class
+*.pyo
+*.pyd
 
-# Virtual environments
+# =========================
+# Virtual Environments
+# =========================
 venv/
 env/
 ENV/
 .venv/
 
 # =========================
-# Environment variables (IMPORTANT 🔐)
+# Environment Variables (IMPORTANT)
 # =========================
 .env
 .env.*
 *.env
 
 # =========================
-# Logs
+# Logs & Runtime Files
 # =========================
 *.log
+logs/
+*.pid
 
 # =========================
-# OS files
+# OS Generated Files
 # =========================
 .DS_Store
 Thumbs.db
 
 # =========================
-# VS Code / IDE
+# IDE / Editor
 # =========================
 .vscode/
 .idea/
 
 # =========================
-# Testing / coverage
+# Testing & Coverage
 # =========================
 .pytest_cache/
 .coverage
+.coverage.*
 htmlcov/
+.tox/
+.nox/
 
 # =========================
-# Build / distribution
+# Build / Distribution
 # =========================
 build/
 dist/
 *.egg-info/
+.eggs/
+pip-wheel-metadata/
+
+# =========================
+# Type Check / Lint Cache
+# =========================
+.mypy_cache/
+.ruff_cache/
+.pyre/
+
+# =========================
+# Jupyter Notebook
+# =========================
+.ipynb_checkpoints/
 
 # =========================
 # Docker
@@ -56,15 +83,31 @@ dist/
 docker-compose.override.yml
 
 # =========================
-# Secrets / configs
+# Secrets / Config Files
 # =========================
 secrets.json
 config.json
 credentials.json
 
 # =========================
-# Temporary files
+# Temporary / Misc
 # =========================
 *.tmp
 *.bak
 *.swp
+*.swo
+
+# =========================
+# Optional: Local Databases / Cache
+# =========================
+*.sqlite3
+*.db
+.cache/
+
+# =========================
+# Optional: Model / Artifact Files
+# Uncomment if needed
+# =========================
+# models/
+# artifacts/
+# outputs/
