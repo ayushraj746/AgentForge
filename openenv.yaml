@@ -1,0 +1,106 @@
+id: agentforge
+name: AgentForge Environment
+
+entry_point: env.environment:AgentForgeEnv
+
+description: >
+  AgentForge is a dynamic OpenEnv environment that simulates a real-world 
+  software engineering workflow. An AI agent acts as an Autonomous Workflow Engineer, 
+  capable of writing code, debugging, testing, searching documentation, managing versions, 
+  and interacting with a simulated terminal. The environment evolves over time with 
+  changing requirements, system issues, and dependency conflicts.
+
+# ---------------- TASKS ---------------- #
+tasks:
+  - easy
+  - medium
+  - hard
+
+# ---------------- OBSERVATION SPACE ---------------- #
+observation_space:
+  type: dict
+  properties:
+    files:
+      type: object
+      description: Project files and their content
+
+    current_task:
+      type: string
+      description: Current task description (can evolve)
+
+    task_metadata:
+      type: object
+      description: Task details including tests, difficulty, tools
+
+    step_count:
+      type: integer
+
+    current_phase:
+      type: string
+      description: Workflow phase (init, develop, test, debug, deploy)
+
+    errors:
+      type: array
+      items:
+        type: string
+
+    active_issues:
+      type: array
+      items:
+        type: string
+
+    test_results:
+      type: object
+
+    tool_usage:
+      type: object
+      description: Count of tools used by agent
+
+    reasoning_trace:
+      type: array
+      items:
+        type: string
+
+    triggered_events:
+      type: array
+      items:
+        type: string
+
+    reward:
+      type: number
+
+    cumulative_reward:
+      type: number
+
+# ---------------- ACTION SPACE ---------------- #
+action_space:
+  type: dict
+  properties:
+    tool:
+      type: string
+      enum:
+        [
+          "create_file",
+          "edit_file",
+          "append_file",
+          "delete_file",
+          "run_tests",
+          "doc_search",
+          "git_commit",
+          "git_log",
+          "terminal"
+        ]
+
+    params:
+      type: object
+      description: Parameters for the selected tool
+
+    reasoning:
+      type: string
+      description: Agent reasoning behind action (optional but encouraged)
+
+# ---------------- REWARD ---------------- #
+reward_range: [0, 1.5]
+
+# ---------------- EPISODE CONTROL ---------------- #
+max_steps: 50

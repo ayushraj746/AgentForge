@@ -1,0 +1,114 @@
+# =========================================
+# Project: AgentForge
+# =========================================
+
+# =========================
+# Python
+# =========================
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+
+# =========================
+# Virtual Environments
+# =========================
+venv/
+vevn/
+env/
+ENV/
+.venv/
+
+# =========================
+# Environment Variables (IMPORTANT)
+# =========================
+.env
+.env.*
+*.env
+
+# =========================
+# Logs & Runtime Files
+# =========================
+*.log
+logs/
+*.pid
+
+# =========================
+# OS Generated Files
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# IDE / Editor
+# =========================
+.vscode/
+.idea/
+
+# =========================
+# Testing & Coverage
+# =========================
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+
+# =========================
+# Build / Distribution
+# =========================
+build/
+dist/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+
+# =========================
+# Type Check / Lint Cache
+# =========================
+.mypy_cache/
+.ruff_cache/
+.pyre/
+
+# =========================
+# Jupyter Notebook
+# =========================
+.ipynb_checkpoints/
+
+# =========================
+# Docker
+# =========================
+*.tar
+docker-compose.override.yml
+
+# =========================
+# Secrets / Config Files
+# =========================
+secrets.json
+config.json
+credentials.json
+
+# =========================
+# Temporary / Misc
+# =========================
+*.tmp
+*.bak
+*.swp
+*.swo
+
+# =========================
+# Optional: Local Databases / Cache
+# =========================
+*.sqlite3
+*.db
+.cache/
+
+# =========================
+# Optional: Model / Artifact Files
+# Uncomment if needed
+# =========================
+# models/
+# artifacts/
+# outputs/
