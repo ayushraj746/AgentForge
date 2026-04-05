@@ -6,7 +6,8 @@ class TaskManager:
         self.tasks = {
             "easy": self._easy_task(),
             "medium": self._medium_task(),
-            "hard": self._hard_task()
+            "hard": self._hard_task(),
+            "hard_plus": self._hard_plus_task()
         }
 
     def get_task(self, difficulty: str) -> Dict[str, Any]:
@@ -62,4 +63,22 @@ REQUIREMENT = "sum"
 """
             },
             "goal": "Implement processing, adapt to requirement changes, and optimize performance"
+        }
+
+    # ---------------- HARD PLUS ---------------- #
+    def _hard_plus_task(self) -> Dict[str, Any]:
+        return {
+            "description": "Handle dynamic requirements and implement adaptive processing with error handling.",
+            "files": {
+                "main.py": """
+def process_data(data, mode="sum"):
+    # TODO: implement dynamic processing based on mode
+    # modes: sum, average
+    return None
+""",
+                "config.py": """
+REQUIREMENT = "dynamic"
+"""
+            },
+            "goal": "Implement dynamic processing, support multiple modes, and handle edge cases robustly"
         }
