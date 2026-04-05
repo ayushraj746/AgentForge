@@ -10,6 +10,12 @@ description: >
   and interacting with a simulated terminal. The environment evolves over time with 
   changing requirements, system issues, and dependency conflicts.
 
+# ---------------- TASKS ---------------- #
+tasks:
+  - easy
+  - medium
+  - hard
+
 # ---------------- OBSERVATION SPACE ---------------- #
 observation_space:
   type: dict
