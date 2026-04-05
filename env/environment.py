@@ -36,6 +36,8 @@ class AgentForgeEnv:
 
     # ---------------- RESET ---------------- #
     def reset(self, task: str = "easy") -> Dict[str, Any]:
+        print(f"[Env] Resetting environment with task: {task}")  # 🔥 logging added
+
         self.state = EnvironmentState()
 
         task_data = self.task_manager.get_task(task)
@@ -61,6 +63,8 @@ class AgentForgeEnv:
         tool = action.get("tool")
         params = action.get("params", {})
         reasoning = action.get("reasoning", "No reasoning provided")
+
+        print(f"[Env] Step {self.state.step_count} | Tool: {tool}")  # 🔥 logging
 
         result = None
 
@@ -132,7 +136,7 @@ class AgentForgeEnv:
             reasoning=reasoning
         )
 
-        # -------- DYNAMIC BUG SYSTEM (FIXED) -------- #
+        # -------- DYNAMIC BUG SYSTEM -------- #
         self._handle_dynamic_issue()
 
         # -------- DONE CONDITION -------- #
@@ -143,6 +147,7 @@ class AgentForgeEnv:
             self.state.done = True
 
         if self.state.done:
+            print("[Env] Episode finished")  # 🔥 logging
             self.state.end()
 
         return {
@@ -159,6 +164,8 @@ class AgentForgeEnv:
                 self._trigger_event(event["type"])
 
     def _trigger_event(self, event_type: str):
+        print(f"[Env] Event Triggered: {event_type}")  # 🔥 logging
+
         if event_type == "requirement_change":
             self.state.current_task += " | NEW: handle edge cases"
             self.state.trigger_event(event_type)
@@ -171,13 +178,8 @@ class AgentForgeEnv:
             self.state.add_error("Dependency conflict in utils.py")
             self.state.trigger_event(event_type)
 
-    # ---------------- DYNAMIC ISSUE (🔥 FINAL FIXED VERSION) ---------------- #
+    # ---------------- DYNAMIC ISSUE ---------------- #
     def _handle_dynamic_issue(self):
-        """
-        Inject once → wait for fix → then reset → allow completion
-        """
-
-        # Case 1: Inject bug AFTER first success
         if self.state.test_results.get("passed") and not self.state.dynamic_issue_active:
             if "main.py" in self.state.files:
                 code = self.state.files["main.py"]
@@ -190,10 +192,9 @@ class AgentForgeEnv:
 
                     self.state.dynamic_issue_active = True
 
-                    print("⚠️ Dynamic Issue Injected: Logic corrupted after success")
+                    print("⚠️ Dynamic Issue Injected")
                     return
 
-        # Case 2: If bug was active and now fixed → reset flag
         if self.state.dynamic_issue_active:
             if self.state.test_results.get("passed"):
                 self.state.dynamic_issue_active = False

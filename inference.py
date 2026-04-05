@@ -11,8 +11,11 @@ print("🚀 File running")
 class HybridAgent:
     def __init__(self):
         self.use_openai = bool(os.getenv("OPENAI_API_KEY"))
+        print(f"[Agent] OpenAI Enabled: {self.use_openai}")  # 🔥 logging
 
     def decide_action(self, state):
+        print("[Agent] Deciding action...")  # 🔥 logging
+
         if self.use_openai:
             try:
                 action = self._llm_decision(state)
@@ -22,11 +25,11 @@ class HybridAgent:
                     return action
 
             except Exception as e:
-                print("LLM failed, using fallback:", e)
+                print("[Agent] LLM failed, using fallback:", e)
 
         return self._rule_based(state)
 
-    # ---------------- FAILURE ANALYSIS (🔥 KILLER FEATURE) ---------------- #
+    # ---------------- FAILURE ANALYSIS ---------------- #
     def _analyze_failure(self, test_results):
         errors = test_results.get("errors", [])
 
@@ -39,44 +42,42 @@ class HybridAgent:
             return "Function is using subtraction instead of addition"
 
         if "processing logic incomplete" in error:
-            return "Processing logic missing, should aggregate data (e.g., sum)"
+            return "Processing logic missing, should aggregate data"
 
         if "division" in error:
             return "Division not handling edge cases like divide by zero"
 
         return "General logic issue detected"
 
-    # ---------------- RULE-BASED INTELLIGENT AGENT ---------------- #
+    # ---------------- RULE-BASED AGENT ---------------- #
     def _rule_based(self, state):
         files = state.get("files", {})
         test_results = state.get("test_results", {})
         step = state.get("step_count", 0)
         tool_usage = state.get("tool_usage", {})
 
-        # ---------------- PHASE 1: UNDERSTAND ---------------- #
+        # PHASE 1: UNDERSTAND
         if step == 0:
             return {
                 "tool": "doc_search",
                 "params": {"query": state.get("current_task", "")},
-                "reasoning": "Understanding task requirements via documentation"
+                "reasoning": "Understanding task via documentation"
             }
 
-        # ---------------- PHASE 2: RUN TESTS ---------------- #
+        # PHASE 2: TEST
         if not test_results:
             return {
                 "tool": "run_tests",
                 "params": {},
-                "reasoning": "Running tests to understand current failures"
+                "reasoning": "Running tests to detect failures"
             }
 
-        # ---------------- PHASE 3: DEBUG ---------------- #
+        # PHASE 3: DEBUG
         if not test_results.get("passed"):
 
-            # 🔥 ADD DIAGNOSIS
             diagnosis = self._analyze_failure(test_results)
-            print("🧠 Diagnosis:", diagnosis)
+            print("[Agent] Diagnosis:", diagnosis)
 
-            # if already fixed → VERIFY
             if "main.py" in files:
                 code = files["main.py"]
 
@@ -88,18 +89,16 @@ class HybridAgent:
                     return {
                         "tool": "run_tests",
                         "params": {},
-                        "reasoning": f"Verifying fix after applying solution ({diagnosis})"
+                        "reasoning": f"Verifying fix ({diagnosis})"
                     }
 
-            # use docs if not used
             if "doc_search" not in tool_usage:
                 return {
                     "tool": "doc_search",
                     "params": {"query": str(test_results)},
-                    "reasoning": f"Searching documentation to resolve error: {diagnosis}"
+                    "reasoning": f"Searching solution ({diagnosis})"
                 }
 
-            # FIX CODE
             if "main.py" in files:
                 code = files["main.py"]
 
@@ -109,14 +108,14 @@ class HybridAgent:
                 elif "return None" in code:
                     new_code = code.replace("return None", "return sum(data)")
 
-                elif "divide" in code and "/ b" in code:
+                elif "return a / b" in code:
                     new_code = code.replace(
                         "return a / b",
                         "return a / b if b != 0 else 0"
                     )
 
                 else:
-                    new_code = code + "\n# applied fallback fix"
+                    new_code = code + "\n# fallback fix applied"
 
                 return {
                     "tool": "edit_file",
@@ -124,10 +123,10 @@ class HybridAgent:
                         "filename": "main.py",
                         "new_content": new_code
                     },
-                    "reasoning": f"Fixing code based on diagnosis: {diagnosis}"
+                    "reasoning": f"Fixing code ({diagnosis})"
                 }
 
-        # ---------------- PHASE 4: VALIDATE ---------------- #
+        # PHASE 4: VALIDATE
         if not test_results.get("passed"):
             return {
                 "tool": "run_tests",
@@ -135,23 +134,22 @@ class HybridAgent:
                 "reasoning": "Re-running tests after fix"
             }
 
-        # ---------------- PHASE 5: COMMIT ---------------- #
+        # PHASE 5: COMMIT
         if "git_commit" not in tool_usage:
             return {
                 "tool": "git_commit",
-                "params": {"message": "Fixed bug and improved logic"},
-                "reasoning": "Saving stable version using git"
+                "params": {"message": "Fix applied and validated"},
+                "reasoning": "Saving stable version"
             }
 
-        # ---------------- PHASE 6: TERMINAL CHECK ---------------- #
+        # PHASE 6: TERMINAL
         if "terminal" not in tool_usage:
             return {
                 "tool": "terminal",
                 "params": {"command": "ls"},
-                "reasoning": "Inspecting project files via terminal"
+                "reasoning": "Inspecting project structure"
             }
 
-        # ---------------- FINAL ---------------- #
         return {
             "tool": "run_tests",
             "params": {},
@@ -188,6 +186,7 @@ Return ONLY JSON:
             return json.loads(content)
 
         except Exception:
+            print("[Agent] LLM parsing failed, fallback triggered")
             return self._rule_based(state)
 
 
@@ -198,8 +197,8 @@ def run_episode(task="easy", max_steps=20):
 
     state = env.reset(task=task)
 
-    print(f"\n🚀 Starting Task: {task}")
-    print(f"📝 Description: {state['current_task']}")
+    print(f"\n🚀 Task: {task}")
+    print(f"📝 {state['current_task']}")
 
     total_reward = 0.0
 
@@ -231,8 +230,6 @@ def run_episode(task="easy", max_steps=20):
 
     print("\n📊 Final Reward:", total_reward)
     print("📊 Evaluation:", evaluation)
-    print("🧰 Tool Usage:", state.get("tool_usage"))
-    print("🧠 Reasoning Trace:", state.get("reasoning_trace"))
 
     return total_reward
 
