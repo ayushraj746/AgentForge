@@ -1,24 +1,73 @@
 import streamlit as st
 import time
 import pandas as pd
+import threading
+
+# ===== FASTAPI IMPORTS =====
+from fastapi import FastAPI
+import uvicorn
+
 from env.environment import AgentForgeEnv
 from inference import HybridAgent
 
-# ---------------- PAGE CONFIG ---------------- #
+# ============================
+# FASTAPI BACKEND (FOR HACKATHON)
+# ============================
+
+api = FastAPI()
+
+env = AgentForgeEnv()
+agent = HybridAgent()
+state = None
+
+@api.get("/")
+def root():
+    return {"message": "AgentForge API running"}
+
+@api.get("/health")
+def health():
+    return {"status": "ok"}
+
+@api.post("/reset")
+def reset(task: str = "easy"):
+    global state
+    state = env.reset(task=task)
+    return {"state": state}
+
+@api.post("/step")
+def step():
+    global state
+    action = agent.decide_action(state)
+    result = env.step(action)
+    state = result["state"]
+    return result
+
+# ============================
+# RUN FASTAPI IN BACKGROUND
+# ============================
+
+def run_api():
+    uvicorn.run(api, host="0.0.0.0", port=7860)
+
+if "api_started" not in st.session_state:
+    threading.Thread(target=run_api, daemon=True).start()
+    st.session_state.api_started = True
+
+# ============================
+# STREAMLIT UI (UNCHANGED)
+# ============================
+
 st.set_page_config(page_title="AgentForge Dashboard", layout="wide")
 
-# ---------------- STYLE ---------------- #
 st.markdown("""
 <style>
 .block-container {padding-top: 1rem;}
 </style>
 """, unsafe_allow_html=True)
 
-# ---------------- HEADER ---------------- #
 st.title("🚀 AgentForge Dashboard")
 st.caption("Autonomous AI Agent for Software Engineering Workflows")
 
-# ---------------- SIDEBAR ---------------- #
 st.sidebar.header("⚙️ Controls")
 
 task = st.sidebar.selectbox(
@@ -28,9 +77,7 @@ task = st.sidebar.selectbox(
 
 run_button = st.sidebar.button("▶ Run Agent")
 
-# ---------------- MAIN ---------------- #
 if run_button:
-    # Initialize environment and agent
     env = AgentForgeEnv()
     agent = HybridAgent()
 
@@ -40,7 +87,6 @@ if run_button:
     st.write("### Task Description")
     st.write(state["current_task"])
 
-    # Layout columns
     col1, col2, col3 = st.columns(3)
 
     reward_placeholder = col1.empty()
@@ -50,16 +96,12 @@ if run_button:
     progress = st.progress(0)
     total_reward = 0.0
 
-    # Tracking reward progression
     reward_history = []
     step_history = []
 
     log_area = st.container()
-
-    # Live chart placeholder
     chart_placeholder = st.empty()
 
-    # ---------------- LOOP ---------------- #
     for step in range(20):
         progress.progress((step + 1) / 20)
 
@@ -72,16 +114,13 @@ if run_button:
 
         total_reward += reward
 
-        # Store values for chart
         reward_history.append(total_reward)
         step_history.append(step + 1)
 
-        # ---------------- METRICS ---------------- #
         reward_placeholder.metric("💰 Total Reward", round(total_reward, 3))
         step_placeholder.metric("📍 Steps", step + 1)
         status_placeholder.metric("📡 Status", "Running")
 
-        # ---------------- LIVE CHART ---------------- #
         df = pd.DataFrame({
             "Step": step_history,
             "Reward": reward_history
@@ -89,19 +128,12 @@ if run_button:
 
         chart_placeholder.line_chart(df)
 
-        # ---------------- LOGS ---------------- #
         with log_area:
             with st.expander(f"Step {step + 1} Details", expanded=False):
                 st.write("🧠 Reasoning:", action.get("reasoning"))
                 st.write("⚡ Action Taken:", action)
                 st.write("📤 Result:", result.get("result"))
                 st.write("🎯 Reward Gained:", reward)
-
-                if "Diagnosis" in str(action.get("reasoning")):
-                    st.info("🩺 Diagnosis triggered")
-
-                if "Dynamic Issue" in str(result.get("result")) or "Dynamic Issue" in str(result):
-                    st.warning("⚠️ Dynamic Issue Injected")
 
         if done:
             status_placeholder.metric("📡 Status", "Completed")
@@ -110,7 +142,6 @@ if run_button:
 
         time.sleep(0.3)
 
-    # ---------------- FINAL ---------------- #
     st.divider()
 
     evaluation = env.evaluate()
