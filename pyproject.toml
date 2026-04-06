@@ -5,6 +5,7 @@ description = "AgentForge OpenEnv environment"
 authors = [
     { name = "Ayush" }
 ]
+
 dependencies = [
     "fastapi",
     "uvicorn",
@@ -13,8 +14,12 @@ dependencies = [
     "pandas",
     "numpy",
     "matplotlib",
-    "openai"
+    "openai",
+    "openenv>=0.2.0"
 ]
+
+[project.scripts]
+server = "api:app"
 
 [tool.setuptools]
 packages = ["env", "tools"]
