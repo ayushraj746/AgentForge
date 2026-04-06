@@ -19,7 +19,7 @@ dependencies = [
 ]
 
 [project.scripts]
-server = "api:app"
+server = "server.app:main"
 
 [tool.setuptools]
 packages = ["env", "tools"]
