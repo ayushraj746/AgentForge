@@ -1,0 +1,20 @@
+[project]
+name = "agentforge"
+version = "0.1.0"
+description = "AgentForge OpenEnv environment"
+authors = [
+    { name = "Ayush" }
+]
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "pydantic",
+    "streamlit",
+    "pandas",
+    "numpy",
+    "matplotlib",
+    "openai"
+]
+
+[tool.setuptools]
+packages = ["env", "tools"]
