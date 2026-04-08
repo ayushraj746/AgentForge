@@ -140,7 +140,15 @@ def run_episode(task="easy", max_steps=20):
             break
 
     evaluation = env.evaluate()
-    score = round(total_reward, 3)
+
+    #  Clamp score strictly between (0,1)
+    score = total_reward
+    if score <= 0:
+        score = 0.01
+    elif score >= 1:
+        score = 0.99
+
+    score = round(score, 3)
 
     print(f"[END] task={task} score={score} steps={step+1}", flush=True)
 
