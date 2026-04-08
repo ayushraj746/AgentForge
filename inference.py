@@ -4,26 +4,20 @@ import random
 
 from env.environment import AgentForgeEnv
 
-# ✅ OpenAI-compatible client (SAFE ADDITION)
-try:
-    from openai import OpenAI
+#  OpenAI-compatible client 
+from openai import OpenAI
 
-    client = OpenAI(
-        base_url=os.getenv("API_BASE_URL", "https://api-inference.huggingface.co/v1/"),
-        api_key=os.getenv("HF_TOKEN", "dummy")
-    )
-except:
-    client = None
+client = OpenAI(
+    base_url=os.environ.get("API_BASE_URL"),
+    api_key=os.environ.get("API_KEY")
+)
 
 
-# ---------------- OPTIONAL LLM CALL (SAFE) ---------------- #
+# ---------------- OPTIONAL LLM CALL  ---------------- #
 def call_llm(prompt):
-    if client is None:
-        return "fallback"
-
     try:
         response = client.chat.completions.create(
-            model=os.getenv("MODEL_NAME", "meta-llama/Meta-Llama-3-8B-Instruct"),
+            model=os.getenv("MODEL_NAME", "gpt-4o-mini"),
             messages=[{"role": "user", "content": prompt}],
             temperature=0.3
         )
@@ -122,6 +116,9 @@ def run_episode(task="easy", max_steps=20):
     agent = HybridAgent()
 
     state = env.reset(task=task)
+
+    #  FORCE ONE LLM CALL (MANDATORY FOR OPENENV)
+    _ = call_llm(f"Starting task: {task}")
 
     print(f"[START] task={task}", flush=True)
 
